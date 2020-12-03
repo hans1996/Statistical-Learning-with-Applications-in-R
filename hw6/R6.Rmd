@@ -1,0 +1,145 @@
+---
+title: "çµ±è?ˆå­¸ç¿?"
+subtitle: M072040017 ?™³?? å»·
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#3.14
+#(a)
+```{r}
+set.seed (1)
+x1=runif (100)
+x2 =0.5* x1+rnorm (100) /10
+y=2+2* x1 +0.3* x2+rnorm (100)
+```
+$y = 2 + 2x_1 + 0.3x_2 + \epsilon$
+
+$x_1$ï¼? 2, $x_2$ ï¼? 0.3
+
+#(b)
+```{r}
+cor(x1,x2)
+plot(x1,x2)
+```
+correlation : 0.83
+
+
+#(c)
+```{r}
+lm1 = lm(y~x1+x2)
+coef(lm1)
+summary(lm1)
+```
+æ¨¡å??:$y = 1.82 + 1.89x_1 + 0.76x_2$
+
+$\widehat{\beta}_0 = 1.82, \;\widehat{\beta}_1 = 1.89, \;\widehat{\beta}_2 = 0.76$ 
+
+å¾p-value??ƒç™¼?¾$x_2$ä¸¦ä?é¡¯??—ï?Œæ?€ä»¥è?æ?’ç??$H_0\ :\ \beta_1 = 0$ï¼Œæ¥???$H_0\ :\ \beta_2 = 0.$
+
+#(d)
+```{r}
+lm2 = lm(y~x1)
+summary(lm2)
+```
+å¾—åˆ°???$\widehat{\beta}_1$è·Ÿlm1???$\widehat{\beta}_1$ä¸ä?€æ¨?ï¼Œè€Œp-valueå¤ å?ï??$x_1$å¤ é¡¯??—ï?Œæ?’ç?•è?›ç„¡??‡è¨­?€?
+
+#(e)
+```{r}
+lm3 = lm(y~x2)
+summary(lm3)
+```
+å¾—åˆ°???$\widehat{\beta}_2$è·Ÿlm1???$\widehat{\beta}_2$ä¸ä?€æ¨?ï¼Œè€Œp-valueå¤ å?ï??$x_2$å¤ é¡¯??—ï?Œæ?’ç?•è?›ç„¡??‡è¨­?€?
+
+#(f)
+?? ç‚º$x_1,\ x_2$??„correlationå¾ˆé?˜ï?Œæ?€ä»¥ç•¶?…©?€‹ä?€èµ·æ”¾?œ¨è¿´æ­¸æ¨¡å?‹æ?‚ï?Œæœ¬ä¾†å°±??ƒè?Ÿå€‹åˆ¥?”¾?…¥è¿´æ­¸æ¨¡å?‹ï?Œæ?€å¾—åˆ°???$\widehat{\beta}$ä¸ä?€æ¨??€‚æ?‰ä?›æ?…æ?ä?‹ï?Œå¯?ƒ½??ƒè?“å€‹åˆ¥??Ÿæœ¬?˜¯æ­????$\widehat{\beta}$ï¼Œåœ¨?•¶?…©?€‹ä?€èµ·è?è?–æ?‚ï?Œè?Šæ?è? ç??$\widehat{\beta}$?€?
+
+#(g)
+```{r}
+x1=c(x1 , 0.1)
+x2=c(x2 , 0.8)
+y=c(y,6)
+lm1 = lm(y~x1+x2)
+lm2 = lm(y~x1)
+lm3 = lm(y~x2)
+c(lm1,lm2,lm3)
+summary(lm1)
+summary(lm2)
+summary(lm3)
+
+plot(lm1)
+plot(lm2)
+plot(lm3)
+
+```
+å°lm1ï¼Œå?Ÿæœ¬?˜¯$x_2$ä¸é¡¯??—ï?Œç¾?œ¨??‡è?Šæ??$x_1ä¸é¡¯???$?€?
+å°æ–¼?¦å¤–å…©?€‹æ¨¡??‹ï??$\widehat{\beta}$ä¾è?Šé?„æ˜¯é¡¯è?—ç?„ã€?
+å¾Leverage??–ä?†ç?‹ï?Œlm1??„æ–°??„é‚£é»æ˜¯high-leverage
+pointï¼Œä?–é? é›¢äº†å…¶ä»–è?Šæ•¸??€æ¶µè?‹ç?„ç?„å?ï?›lm2??„æ–°??„é‚£é»æ˜¯outlierï¼Œä?–é? é›¢äº†å…¶ä»–è?Šæ•¸??€å°æ?‰åˆ°??„ç?„å??(standardized residuals)ï¼›lm3??„æ–°??„é‚£é»æ˜¯high-leverage
+pointï¼Œä?–é? é›¢äº†å…¶ä»–è?Šæ•¸??€æ¶µè?‹ç?„ç?„å?ã€?
+
+#3.15
+#(a)
+```{r}
+library(MASS)
+a = Map(function(x)summary(x),Map(function(x)lm(crim~x,Boston),Boston[,-1]))
+b = Map(function(x)a[[x]]$coefficients,c(1:ncol(Boston[-1])))
+c = Map(function(x)names(a[x]),c(1:ncol(Boston[-1])))
+names(b)<-c;b
+
+plot(Boston$chas,Boston$crim)
+```
+å¾summaryä¾†ç?‹ï?Œåª??‰chaså°crimä¸¦ä?é¡¯??—ã€?
+
+#(b)
+```{r}
+lm1 = lm(crim~.,Boston)
+summary(lm1)
+```
+æ¯”èµ·ä¸Šä?€é¡Œå?„åˆ¥è·Ÿcrim?»??šè¿´æ­¸æ¨¡??‹ï?Œç¾?œ¨ä¸€èµ·ç?‹ç?„è©±ï¼Œå?è€Œæ?‰å?ˆå?šå…¶å¯¦å?crimä¸¦ä?é¡¯??—ã€‚indus,chas,rm,age,tax,ptratioï¼Œé€™ä?›æ˜¯ä¸é¡¯??—ç?„ï?Œæ?€ä»¥è?æ¥???$H_0$??‡è¨­ï¼Œè€Œå…¶ä»–å?‡æ˜¯??’ç??$H_0$?€?
+
+#(c)
+```{r}
+plot(Map(function(x)coef(lm(crim~x,Boston))[2],Boston[,-1]),coef(lm1)[-1])
+```
+
+#(d)
+```{r}
+Map(function(x)summary(x),Map(function(x)lm(crim~poly(x,3),Boston), Boston[,-c(1,4)]))
+
+```
+å°?3æ¬¡ä?é¡¯??—ç?„æ?‰zn, rm, rad, tax, black, lstat?€?
+
+å°?2æ¬¡ä?é¡¯??—ç?„æ?‰black?€?
+
+#4.1  
+
+$\begin{align*}
+\frac{P(x)}{1-P(x)} &= \frac{\frac{e^{\beta_0+\beta_1x}}{1+e^{\beta_0+\beta_1x}}}{1-\frac{e^{\beta_0+\beta_1x}}{1+e^{\beta_0+\beta_1x}}}\\
+&= \frac{\frac{e^{\beta_0+\beta_1x}}{1+e^{\beta_0+\beta_1x}}}{\frac{1}{1+e^{\beta_0+\beta_1x}}}\\
+&= e^{\beta_0+\beta_1x}
+\end{align*}$
+
+#4.2
+$$
+\begin{align*}
+\frac{\pi_k \frac{1}{\sqrt{2\pi}\sigma} \exp(-\frac{1}{2\sigma^2}(x-\mu_k)^2)}{\Sigma^k_{l=1}\pi_l \frac{1}{\sqrt{2\pi}\sigma} \exp(-\frac{1}{2\sigma^2}(x-\mu_l)^2)}
+&\propto \pi_k \frac{1}{\sqrt{2\pi}\sigma} \exp(-\frac{1}{2\sigma^2}(x-\mu_k)^2)\\
+&\propto \log(\pi_k)+\log(\frac{1}{\sqrt{2\pi}\sigma})-\frac{(x-\mu_k)^2}{2\sigma^2}\\
+&\propto \log(\pi_k)+x\frac{\mu_k}{\sigma^2}-\frac{\mu_k^2}{2\sigma^2}\ =\ \delta_k(x)
+\end{align*}
+$$
+
+#4.3
+$$
+\begin{align*}
+\frac{\pi_k \frac{1}{\sqrt{2\pi}\sigma} \exp(-\frac{1}{2\sigma^2}(x-\mu_k)^2)}{\Sigma^k_{l=1}\pi_l \frac{1}{\sqrt{2\pi}\sigma} \exp(-\frac{1}{2\sigma^2}(x-\mu_l)^2)}
+&\propto \pi_k \frac{1}{\sqrt{2\pi}\sigma} \exp(-\frac{1}{2\sigma^2}(x-\mu_k)^2)\\
+&\propto \log(\pi_k)+\log(\frac{1}{\sqrt{2\pi}\sigma})-\frac{(x-\mu_k)^2}{2\sigma^2}\\
+&\propto \log(\pi_k)+x\frac{\mu_k}{\sigma^2}-\frac{\mu_k^2}{2\sigma^2}\ =\ \delta_k(x)
+\end{align*}
+$$
+

@@ -1,0 +1,221 @@
+---
+title: "HW10"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Q1
+(a) best subset selection 有最小的training RSS
+(b) best subset selection 有最小的training RSS
+(c) (i)  true
+    (ii) true
+    (iii)false
+    (iv) false
+    (v) false
+
+
+
+Q8
+(a) 
+```{r}
+set.seed(6)
+x <- rnorm(100)
+eps <- rnorm(100)
+```
+(b)
+```{r}
+y <- 6 + 1*x + 4*x^2 - 1*x^3 + eps
+```
+(c)
+```{r}
+library(leaps)
+data.full <- data.frame(y,x)
+regfit.full <- regsubsets(y~ poly(x,10), data = data.full, nvmax = 10)
+reg.summary <- summary(regfit.full)
+par(mfrow = c(2, 2))
+plot(reg.summary$cp, xlab = "Number of variables", ylab = "C_p", type = "l")
+points(which.min(reg.summary$cp), reg.summary$cp[which.min(reg.summary$cp)], col = "red", cex = 2, pch = 20)
+plot(reg.summary$bic, xlab = "Number of variables", ylab = "BIC", type = "l")
+points(which.min(reg.summary$bic), reg.summary$bic[which.min(reg.summary$bic)], col = "red", cex = 2, pch = 20)
+plot(reg.summary$adjr2, xlab = "Number of variables", ylab = "Adjusted R^2", type = "l")
+points(which.max(reg.summary$adjr2), reg.summary$adjr2[which.max(reg.summary$adjr2)], col = "red", cex = 2, pch = 20)
+cbind(reg.summary$which , adjr2=reg.summary$adjr2 , cp=reg.summary$cp , bic=reg.summary$bic)
+coef(regfit.full, which.max(reg.summary$adjr2))
+coef(regfit.full, which.min(reg.summary$cp))
+coef(regfit.full, which.min(reg.summary$bic))
+
+
+```
+(d)
+```{r}
+
+regfit.fwd <- regsubsets(y ~ poly(x,10), data = data.full, nvmax = 10, method = "forward")
+reg.summary.fwd <- summary(regfit.fwd)
+par(mfrow = c(2, 2))
+plot(reg.summary.fwd$cp, xlab = "Number of variables", ylab = "C_p", type = "l")
+points(which.min(reg.summary.fwd$cp), reg.summary.fwd$cp[which.min(reg.summary.fwd$cp)], col = "red", cex = 2, pch = 20)
+plot(reg.summary.fwd$bic, xlab = "Number of variables", ylab = "BIC", type = "l")
+points(which.min(reg.summary.fwd$bic), reg.summary.fwd$bic[which.min(reg.summary.fwd$bic)], col = "red", cex = 2, pch = 20)
+plot(reg.summary.fwd$adjr2, xlab = "Number of variables", ylab = "Adjusted R^2", type = "l")
+points(which.max(reg.summary.fwd$adjr2), reg.summary.fwd$adjr2[which.max(reg.summary.fwd$adjr2)], col = "red", cex = 2, pch = 20)
+mtext("Plots of C_p, BIC and adjusted R^2 for forward stepwise selection", side = 3, line = -2, outer = TRUE)
+coef(regfit.fwd, which.max(reg.summary.fwd$adjr2))
+coef(regfit.full, which.min(reg.summary.fwd$cp))
+coef(regfit.full, which.min(reg.summary.fwd$bic))
+cbind(reg.summary.fwd$which , adjr2=reg.summary.fwd$adjr2 , cp=reg.summary.fwd$cp , bic=reg.summary.fwd$bic)
+
+regfit.bwd <- regsubsets(y~ poly(x,10), data = data.full, nvmax = 10, method = "backward")
+reg.summary.bwd <- summary(regfit.bwd)
+par(mfrow = c(2, 2))
+plot(reg.summary.bwd$cp, xlab = "Number of variables", ylab = "C_p", type = "l")
+points(which.min(reg.summary.bwd$cp), reg.summary.bwd$cp[which.min(reg.summary.bwd$cp)], col = "red", cex = 2, pch = 20)
+plot(reg.summary.bwd$bic, xlab = "Number of variables", ylab = "BIC", type = "l")
+points(which.min(reg.summary.bwd$bic), reg.summary.bwd$bic[which.min(reg.summary.bwd$bic)], col = "red", cex = 2, pch = 20)
+plot(reg.summary.bwd$adjr2, xlab = "Number of variables", ylab = "Adjusted R^2", type = "l")
+points(which.max(reg.summary.bwd$adjr2), reg.summary.bwd$adjr2[which.max(reg.summary.bwd$adjr2)], col = "red", cex = 2, pch = 20)
+mtext("Plots of C_p, BIC and adjusted R^2 for backward stepwise selection", side = 3, line = -2, outer = TRUE)
+coef(regfit.bwd, which.max(reg.summary.bwd$adjr2))
+coef(regfit.full, which.min(reg.summary.bwd$cp))
+coef(regfit.full, which.min(reg.summary.bwd$bic))
+cbind(reg.summary.bwd$which , adjr2=reg.summary.bwd$adjr2 , cp=reg.summary.bwd$cp , bic=reg.summary.bwd$bic)
+
+```
+(e)
+```{r}
+library(glmnet)
+xmat <- model.matrix(y ~ poly(x, 10), data = data.full)[, -1]
+cv.lasso <- cv.glmnet(xmat, y, alpha = 1)
+plot(cv.lasso)
+```
+
+```{r}
+bestlam <- cv.lasso$lambda.min
+bestlam
+```
+
+```{r}
+fit.lasso <- glmnet(xmat, y, alpha = 1)
+predict(fit.lasso, s = bestlam, type = "coefficients")[1:11, ]
+```
+(f)
+```{r}
+y <- 2 + 2 * x^7 + eps
+data.full <- data.frame(y = y, x = x)
+regfit.full <- regsubsets(y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10), data = data.full, nvmax = 10)
+reg.summary <- summary(regfit.full)
+par(mfrow = c(2, 2))
+plot(reg.summary$cp, xlab = "Number of variables", ylab = "C_p", type = "l")
+points(which.min(reg.summary$cp), reg.summary$cp[which.min(reg.summary$cp)], col = "red", cex = 2, pch = 20)
+plot(reg.summary$bic, xlab = "Number of variables", ylab = "BIC", type = "l")
+points(which.min(reg.summary$bic), reg.summary$bic[which.min(reg.summary$bic)], col = "red", cex = 2, pch = 20)
+plot(reg.summary$adjr2, xlab = "Number of variables", ylab = "Adjusted R^2", type = "l")
+points(which.max(reg.summary$adjr2), reg.summary$adjr2[which.max(reg.summary$adjr2)], col = "red", cex = 2, pch = 20)
+```
+
+```{r}
+coef(regfit.full, 7)
+```
+
+```{r}
+coef(regfit.full, 1)
+```
+We find that, with Cp we pick the 7-variables model, with BIC we pick the 1-variables model, and with adjusted R2 we pick the 7-variables model.
+
+
+Q9
+(a) Split the data set into a training set and a test set.
+```{r}
+library(ISLR)
+data("College")
+college <- College
+sum(is.na(College))
+set.seed(123)
+attach(college)
+indexes=sample(1:nrow(college),size=0.3*nrow(college))
+# Split data, 70% training & 30% test
+train=college[-indexes,]
+test=college[indexes,]
+```
+(b) Fit a linear model using least squares on the training set, and
+report the test error obtained.
+```{r}
+model=lm(Apps~.,data=train)
+summary(model)
+```
+
+```{r}
+pred=predict(model,newdata=test)
+MSE=mean((test$Apps-pred)^2)
+MSE
+```
+(c) Fit a ridge regression model on the training set, with λ chosen
+by cross-validation. Report the test error obtained
+```{r}
+require(glmnet)
+set.seed(1)
+xtrain=model.matrix (Apps~.,train)[,-1]
+ytrain=train$Apps
+xtest=model.matrix (Apps~.,test)[,-1]
+ytest=test$Apps
+cv.out=cv.glmnet(xtrain,ytrain,alpha =0)
+bestlam=cv.out$lambda.min
+pred.ridge <- predict(cv.out, s = bestlam,newx = xtest)
+mean((pred.ridge - ytest)^2)
+```
+(d) Fit a lasso model on the training set, with λ chosen by crossvalidation.
+Report the test error obtained, along with the number
+of non-zero coefficient estimates.
+```{r}
+set.seed(1)
+cv.out=cv.glmnet (xtrain,ytrain,alpha =1)
+bestlam=cv.out$lambda.min
+pred.lasso <- predict(cv.out, s = bestlam,newx = xtest)
+mean((pred.ridge - ytest)^2)
+```
+(e) Fit a PCR model on the training set, with M chosen by crossvalidation.
+Report the test error obtained, along with the value
+of M selected by cross-validation.
+```{r}
+library(pls)
+fit.pcr <- pcr(Apps ~ ., data = train, scale = TRUE, validation = "CV")
+validationplot(fit.pcr, val.type = "MSEP")
+
+```
+
+```{r}
+pred.pcr <- predict(fit.pcr, test, ncomp = 10)
+mean((pred.pcr - ytest)^2)
+```
+(f)
+Fit a PLS model on the training set, with M chosen by cross-validation. Report the test error obtained, along with the value of M selected by cross-validation.
+```{r}
+fit.pls <- plsr(Apps ~ ., data =train, scale = TRUE, validation = "CV")
+validationplot(fit.pls, val.type = "MSEP")
+```
+
+```{r}
+pred.pls <- predict(fit.pls, test, ncomp = 10)
+mean((pred.pls - ytest)^2)
+```
+(g) Comment on the results obtained. How accurately can we predict
+the number of college applications received? Is there much
+difference among the test errors resulting from these five approaches?
+```{r}
+test.avg <-  mean(test[, "Apps"])
+
+lm.test.r2 <-  1 - mean((test[, "Apps"] - pred)^2) /
+  mean((test[, "Apps"] - test.avg)^2)
+
+ridge.test.r2 <-  1 - mean((test[, "Apps"] - pred.ridge)^2)/
+  mean((test[, "Apps"] - test.avg)^2)
+
+lasso.test.r2 <-  1 - mean((test[, "Apps"] - pred.lasso)^2) /
+  mean((test[, "Apps"] - test.avg)^2)
+
+barplot(c(lm.test.r2, ridge.test.r2, lasso.test.r2),
+        col = "red", names.arg = c("OLS", "Ridge", "Lasso"),
+        main = "Test R-squared")
+```
+lasso and OLS R^2 are better

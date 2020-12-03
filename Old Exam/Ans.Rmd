@@ -1,0 +1,303 @@
+---
+title: "Ans"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+1.  
+(a). The fitted model will be $$-17.2014*(Intercept)-0.0075*displacement+0.0316*horsepower-0.0069*weight+0.1022*acceleration+0.7586*year$$  
+
+The taining error is  
+```{r}
+Auto_train=read.csv("./Data/auto/auto_train.csv",header = T)
+Auto_test=read.csv("./Data/auto/auto_test.csv",header = T)
+m1=lm(mpg~.,data=Auto_train)
+mean((Auto_train$mpg-m1$fitted.values)^2)
+```
+
+The test error is
+```{r}
+pred_test_y=predict(m1,newdata = Auto_test)
+mean((Auto_test$mpg-pred_test_y)^2)
+```
+The fitted model using predictors which are statically signicant will be  
+$$-12.667*(Intercept)-0.0066*weight+0.7347*year$$  
+The taining error is  
+```{r}
+m2=lm(mpg~weight+year,data=Auto_train)
+mean((Auto_train$mpg-m2$fitted.values)^2)
+```
+The test error is  
+```{r}
+pred_test_y_2=predict(m2,newdata = Auto_test)
+mean((Auto_test$mpg-pred_test_y_2)^2)
+```
+
+
+(b). The fitted model of rigor regression will be 
+
+$$-7.3884*(Intercept)-0.0178*displacement-0.0106*horsepower+-0.004*weight-0.13*acceleration+0.6509*year$$
+The taining error is
+```{r,include=FALSE}
+require(glmnet)
+```
+
+```{r}
+set.seed(1)
+m3=cv.glmnet(as.matrix(Auto_train[,-1]),Auto_train[,1],alpha=0,family="gaussian")
+pred_train_rigor=predict(m3,s=m3$lambda.min,newx = as.matrix(Auto_train[,-1]))
+mean((Auto_train$mpg-pred_train_rigor)^2)
+```
+The test error is  
+```{r}
+pred_test_rigor=predict(m3,s=m3$lambda.min,newx = as.matrix(Auto_test[,-1]))
+mean((Auto_test$mpg-pred_test_rigor)^2)
+```
+
+(c). The fitted model of lasso regression will be 
+
+$$-3.4811*(Intercept)-0.0039*displacement+0*horsepower-0.0055*weight+0*acceleration+0.5809*year$$
+The taining error is  
+```{r}
+set.seed(1)
+m4=cv.glmnet(as.matrix(Auto_train[,-1]),Auto_train[,1],family="gaussian")
+pred_train_lasso=predict(m4,s=m4$lambda.min,newx = as.matrix(Auto_train[,-1]))
+mean((Auto_train$mpg-pred_train_lasso)^2)
+
+```
+The test error is  
+```{r}
+pred_test_lasso=predict(m4,s=m4$lambda.min,newx = as.matrix(Auto_test[,-1]))
+mean((Auto_test$mpg-pred_test_lasso)^2)
+```
+
+(d). According to (a)-(c), multiple regression with significant variables has the smallest test error.
+
+
+(e). Multiple regrssion bootstrap result
+```{r,include=FALSE}
+require(boot)
+```
+
+```{r}
+mul_coef<-function(data,index)
+{
+  NewData=Auto_train[index,]
+  m1=lm(mpg~.,data=NewData)
+  summary(m1)
+  return(m1$coefficients)
+}
+boot(Auto_train,mul_coef,1000)
+```
+
+rigor regrssion bootstrap result
+```{r}
+rigor_coef<-function(data,index)
+{
+  NewData=Auto_train[index,]
+  m3_new=glmnet(as.matrix(NewData[,-1]),NewData[,1],lambda=m3$lambda.min,alpha = 0,family="gaussian");
+  return(as.vector(coef(m3_new)))
+}
+boot(Auto_train,rigor_coef,1000)
+```
+
+lasso regrssion bootstrap result
+```{r}
+lasso_coef<-function(data,index)
+{
+  NewData=Auto_train[index,]
+  m4_new=glmnet(as.matrix(NewData[,-1]),NewData[,1],lambda=m4$lambda.min,alpha = 1,family="gaussian");
+  return(as.vector(coef(m4_new)))
+}
+boot(Auto_train,lasso_coef,1000)
+```
+
+For displacement, weight and year, rigor regression have lowest standard error. For horsepower and acceleration, lasso regression have lowest standard error. For horsepower and acceleration lasso will tends to zeros, so the standard error will lower than rigor regression.
+
+
+2.   
+(a). The smallest k will be 
+```{r}
+A_train=read.csv("./Data/digits/digits_train.csv",header=T);
+A_test=read.csv("./Data/digits/digits_test.csv",header=T);
+
+train_X=A_train[,-1];
+train_Y=A_train[,1];
+
+test_X=A_test[,-1];
+test_Y=A_test[,1];
+#(a)
+p1=prcomp(train_X);
+tmp=summary(p1);
+k=which(tmp$importance[3,]>=0.9)[1];
+k
+new_train_X=as.matrix(train_X)%*%tmp$rotation[,1:k];
+new_test_X=as.matrix(test_X)%*%tmp$rotation[,1:k];
+```
+
+(b). Fit LDA models. The training classification error will be   
+```{r}
+require(MASS)
+cm1=lda(train_Y~.,data=as.data.frame(new_train_X))
+lda.pred=predict(cm1 ,newdata=as.data.frame(new_train_X))
+table1=table(lda.pred$class,train_Y)
+table1
+1-sum(diag(table1))/sum(table1)
+
+```
+
+Test classification error will be 
+```{r}
+lda.pred.test=predict(cm1 ,newdata=as.data.frame(new_test_X))
+table2=table(lda.pred.test$class,test_Y)
+table2
+1-sum(diag(table2))/sum(table2)
+```
+
+(c). Fit QDA models. The training classification error will be   
+```{r}
+cm2=qda(train_Y~.,data=as.data.frame(new_train_X))
+qda.pred=predict(cm2 ,newdata=as.data.frame(new_train_X))
+table3=table(qda.pred$class,train_Y)
+table3
+1-sum(diag(table3))/sum(table3)
+```
+
+Test classification error will be 
+```{r}
+qda.pred.test=predict(cm2 ,newdata=as.data.frame(new_test_X))
+table4=table(qda.pred.test$class,test_Y)
+table4
+1-sum(diag(table4))/sum(table4)
+```
+
+
+(d). Table of training and test errors will be 
+```{r}
+require(class)
+train_error=NULL;
+test_error=NULL;
+for(i in 1:10)
+{
+  m_tmp=knn(new_train_X,new_train_X,train_Y,k=i);
+  table7=table(m_tmp,train_Y)
+  table7
+  train_error[i]=1-sum(diag(table7))/sum(table7)
+  
+  m_tmp=knn(new_train_X,new_test_X,train_Y,k=i);
+  table8=table(m_tmp,test_Y)
+  table8
+  test_error[i]=1-sum(diag(table8))/sum(table8)
+}
+knn_table=rbind(train_error,test_error);
+colnames(knn_table)=1:10
+knn_table
+```
+
+The best K value chosen by test calssification error will be 
+```{r}
+which.min(test_error)
+```
+
+The figure will be 
+
+```{r}
+plot((1:10),train_error,type="l",ylim=c(-0.005,0.12),xlab="K",ylab="error")
+lines((1:10),test_error,col="red")
+legend("topleft",c("train","test"),col=c("black","red"),lty=c(1,1))
+```
+
+(e). Fit multiple logistic regression 
+```{r}
+library(doParallel)
+cl <- makePSOCKcluster(4) # number of cores to use
+registerDoParallel(cl)
+cm3=cv.glmnet(new_train_X,(train_Y),family="multinomial",parallel=TRUE);
+stopCluster(cl)
+```
+
+The training classification error will be   
+```{r}
+mul_log_pred=predict(cm3,newx=new_train_X,s="lambda.min",type="class")
+table9=table(mul_log_pred,train_Y);
+table9
+1-sum(diag(table9))/sum(table9)
+```
+The test classification error will be   
+```{r}
+mul_log_pred_test=predict(cm3,newx=new_test_X,s="lambda.min",type="class")
+table10=table(mul_log_pred_test,test_Y);
+table10
+1-sum(diag(table10))/sum(table10)
+```
+
+(f). knn with $k=3$ has the lowest test error.
+
+3. 
+(a). The figure of accuracy will be 
+```{r}
+heart=read.csv("./Data/heart/heart.csv",header = T)
+heart=na.omit(heart)
+mt1=glm(chd~.,data=heart,family = "binomial")
+pmt1=predict(mt1,type="response",newdata = heart)
+
+accu_re<-function(thes)
+{
+  table_tmp=table(pmt1>thes,heart$chd)
+  return(sum(diag(table_tmp))/sum(table_tmp))
+}
+acc_set=sapply(0.01*(1:90),accu_re)
+plot(0.01*(1:90),acc_set,type="l",xlab="threshold",ylab="accuracy")
+```
+The threhold chosen by maximize accuracy will be 
+```{r}
+bestthe1=0.01*(1:90)[which.max(acc_set)]
+bestthe1
+```
+
+The  correponding confusion matrix will be 
+```{r}
+table(pmt1>bestthe1,heart$chd)
+```
+
+(b) The ROC curve will be 
+
+```{r}
+sen_spec_re<-function(thes)
+{
+  table_tmp=table(pmt1>thes,heart$chd)
+  return(diag(table_tmp)/colSums(table_tmp))
+}
+sen_spec_set=sapply(0.01*(1:90),sen_spec_re)
+row.names(sen_spec_set)=c("specificity","sensetivity")
+colnames(sen_spec_set)=0.01*(1:90)
+plot(1-sen_spec_set[1,],sen_spec_set[2,],type="l",xlab="1-specificity",ylab="sensetivity")
+abline(0,1)
+```
+
+The threhold chosen by maximize accuracy will be 
+```{r}
+bestthe2=0.01*(1:90)[which.max(colSums(sen_spec_set))];
+bestthe2
+```
+
+The  correponding confusion matrix will be 
+
+```{r}
+table(pmt1>bestthe2,heart$chd)
+```
+
+(c). (b) is a better approach, because it has consider the proportion of the label.
+
+
+
+
+
+
+
+

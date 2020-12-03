@@ -1,0 +1,290 @@
+---
+title: "HW11"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+M072040019  梅瀚中
+
+##第四題
+
+#(a)
+iii. Steadily increase.
+因為$\lambda$越大，$\beta_{j}$被限制的越多，模型越不靈活，training RSS越大。
+
+#(b)
+ii. Decrease initially, and then eventually start increasing in a U shape.
+因為$\lambda$越大，$\beta_{j}$被限制的越多，模型越不靈活，一開始test RSS會下降，但過度不靈活的模型可能配適不佳，所以test RSS會漸漸增加。
+
+#(c)
+iv. Steadily decrease.
+因為$\lambda$越大，$\beta_{j}$被限制的越多，模型越不靈活，variance會越小。
+
+#(d)
+iii. Steadily increase.
+因為$\lambda$越大，$\beta_{j}$被限制的越多，模型越部靈活，bias會越大。
+
+#(e)
+v. Remain constant.
+因為$\lambda$越大，$\beta_{j}$被限制的越多，模型越部靈活，但irreducible error與模型不相關，所以irreducible error會保持常數。
+
+
+##第五題
+
+#(a)
+minimize$$ (y_{1} - \beta_{0} - (\beta_{1}x_{11} + \beta_{2}x_{12}))^2 + (y_{2} - \beta_{0} - (\beta_{1}x_{21} + \beta_{2}x_{22}))^2 + \lambda(\beta_{1}^2 + \beta_{2}^2))$$
+
+#(b)
+令$x_{11} = x_{12} = -x_{21} = -x_{22} = x$，$\beta_{0} = 0$
+
+$$ S(\beta_{1},\beta_{2}) = (y_{1} - \beta_{0} - (\beta_{1}x_{11} +\beta_{2}x_{12}))^2 + (y_{2} - \beta_{0} - (\beta_{1}x_{21} +\beta_{2}x_{22}))^2 + \lambda(\beta_{1}^2 + \beta_{2}^2))$$
+$$=(y_{1} -x(\beta_{1}+ \beta_{2}))^2 + (y_{2} + (\beta_{1} + \beta_{2}))^2 +\lambda(\beta_{1}^2 + \beta_{2}^2)) $$
+對$\beta_{1},\beta_{2}$偏微分，並令其為0
+
+$$\frac{\partial S(\beta_{1},\beta_{2})}{\partial \beta_{1}} = -2x(y_{1}-x(\beta_{1}+\beta_{2}))+2(y_{2}+x(\beta_{1}+\beta_{2}))+2\lambda\beta_{1} = 0$$
+$$\frac{\partial S(\beta_{1},\beta_{2})}{\partial \beta_{1}} = -2x(y_{1}-x(\beta_{1}+\beta_{2}))+2(y_{2}+x(\beta_{1}+\beta_{2}))+2\lambda\beta_{2} = 0$$
+得到
+$$2\beta_{1}x^2 + 2\beta_{2}x^2 + \lambda\beta_{1} = x(y_{1}+y_{2})$$
+$$2\beta_{1}x^2 + 2\beta_{2}x^2 + \lambda\beta_{2} = x(y_{1}+y_{2})$$
+兩式相減
+$$\lambda(\beta_{1}-\beta_{2})=0$$
+因此
+$$\hat\beta_{1} = \hat\beta_{2}$$
+
+#(c)
+minimize$$ (y_{1} - \beta_{0} - (\beta_{1}x_{11} + \beta_{2}x_{12}))^2 + (y_{2} - \beta_{0} - (\beta_{1}x_{21} + \beta_{2}x_{22}))^2 + \lambda(|\beta_{1}| + |\beta_{2}|))$$
+
+#(d)
+作法同(b)，
+若$\beta_{1}\beta_{2}>0$，則$\hat\beta_{1} = \hat\beta_{2}$
+若$\beta_{1}\beta_{2}<0$，則$\hat\beta_{1} \neq \hat\beta_{2}$
+
+##第六題
+
+#(a)
+```{r}
+y <- 10
+lambda <- 10
+beta <- seq(-10, 10, 0.1)
+plot(beta, (y - beta)^2 + lambda * beta^2, type = "l", xlab = "beta", ylab = "Ridge optimization")
+beta.est <- y / (1 + lambda)
+points(beta.est, (y - beta.est)^2 + lambda * beta.est^2, col = "red", pch = 4, lwd = 5)
+```
+
+#(b)
+```{r}
+y <- 10
+lambda <- 10
+beta <- seq(-10, 10, 0.1)
+plot(beta, (y - beta)^2 + lambda * abs(beta), type = "l", xlab = "beta", ylab = "Lasso optimization")
+beta.est <- y - lambda / 2
+points(beta.est, (y - beta.est)^2 + lambda * abs(beta.est), col = "red", pch = 4, lwd = 5)
+```
+
+
+##第十題
+
+#(a)
+```{r}
+set.seed(10)
+x <- matrix(rnorm(1000 * 20), 1000, 20)
+b <- rnorm(20)
+z <- sample(1:20, 5)
+b[z] <- 0
+eps <- rnorm(1000)
+y <- x %*% b + eps
+```
+
+#(b)
+```{r}
+set.seed(10)
+train <- sample(1:1000, 100)
+x.train <- x[train,]
+x.test <- x[-train,]
+y.train <- y[train,]
+y.test <- y[-train,]
+```
+
+#(c)
+```{r}
+library(leaps)
+data.train <- data.frame(y = y.train, x = x.train)
+regfit.full <- regsubsets(y~., data = data.train, nvmax = 20)
+train.mat <- model.matrix(y ~ ., data = data.train, nvmax = 20)
+val.errors <- rep(NA, 20)
+for (i in 1:20) {
+    coefi <- coef(regfit.full, id = i)
+    pred <- train.mat[, names(coefi)] %*% coefi
+    val.errors[i] <- mean((pred - y.train)^2)
+}
+plot(val.errors, xlab = "Number of Variables", ylab = "Training MSE", type = "b")
+```
+
+#(d)
+```{r}
+library(leaps)
+data.test <- data.frame(y = y.test, x = x.test)
+regfit.full <- regsubsets(y~., data = data.train, nvmax = 20)
+test.mat <- model.matrix(y ~ ., data = data.test, nvmax = 20)
+val.errors <- rep(NA, 20)
+for (i in 1:20) {
+    coefi <- coef(regfit.full, id = i)
+    pred <- test.mat[, names(coefi)] %*% coefi
+    val.errors[i] <- mean((pred - y.train)^2)
+}
+plot(val.errors, xlab = "Number of Variables", ylab = "test MSE", type = "b")
+```
+
+#(e)
+最小test MSE的變數個數
+```{r}
+which.min(val.errors)
+```
+
+#(f)
+最小test MSE的模型係數
+```{r}
+coef(regfit.full, which.min(val.errors))
+```
+
+#(g)
+
+```{r}
+val.errors <- rep(NA, 20)
+x_cols = colnames(x, do.NULL = FALSE, prefix = "x.")
+for (i in 1:20) {
+    coefi <- coef(regfit.full, id = i)
+    val.errors[i] <- sqrt(sum((b[x_cols %in% names(coefi)] - coefi[names(coefi) %in% x_cols])^2) + sum(b[!(x_cols %in% names(coefi))])^2)
+}
+plot(val.errors, xlab = "Number of Variables", ylab = "Error between estimated and true coefficients", pch = 19, type = "b")
+```
+真實與估計誤差差距最小值出現在變數個數為2，而最小test MSE的模型係數為1，表示模型配適越好並不表示有越小的test MSE。
+
+##第十一題
+
+#(a)
+```{r}
+library(MASS)
+```
+
+i. best subset selection 
+```{r}
+library(leaps)
+#使用交叉驗證方法
+set.seed(10)
+train <- sample(c(TRUE, FALSE), nrow(Boston), rep=TRUE)
+regfit.best <- regsubsets(crim~., data = Boston[train,], nvmax = 13)
+
+test.mat <- model.matrix(crim~., data = Boston[-train,])
+val.errors <- rep(NA,13)
+for (i in 1:13) {
+  coefi = coef(regfit.best, id=i)
+  pred = test.mat[,names(coefi)]%*%coefi
+  val.errors[i] = mean((Boston$crim[-train]-pred)^2)
+}
+
+plot(val.errors, xlab = "Number of Variables", ylab = "CV error", pch = 19, type = "b")
+```
+使用best subset selection，當變數個數為6個時，有最低的test error。
+最小test MSE
+```{r}
+val.errors[which.min(val.errors)]
+```
+
+ii. lasso
+```{r}
+library(glmnet)
+x <- model.matrix(crim~., Boston)[,-1]
+y <- Boston$crim
+grid <- 10^seq(10, -2, length = 100)
+set.seed(10)
+train <- sample(1:nrow(x), nrow(x)/2)
+y.test <- y[-train]
+
+lasso.mod <- glmnet(x[train,], y[train], alpha = 1, lambda = grid)
+set.seed(10)
+cv.out <- cv.glmnet(x[train,], y[train], alpha = 1)
+plot(cv.out)
+```
+最佳$\lambda$
+```{r}
+bestlam <- cv.out$lambda.min
+bestlam
+```
+最小test MSE
+```{r}
+lasso.pred <- predict(lasso.mod, s=bestlam, newx = x[-train,])
+mean((lasso.pred - y.test)^2)
+```
+
+
+iii. ridge
+```{r}
+library(glmnet)
+x <- model.matrix(crim~., Boston)[,-1]
+y <- Boston$crim
+grid <- 10^seq(10, -2, length = 100)
+set.seed(10)
+train <- sample(1:nrow(x), nrow(x)/2)
+y.test <- y[-train]
+
+ridge.mod <- glmnet(x[train,], y[train], alpha = 0, lambda = grid)
+set.seed(10)
+cv.out <- cv.glmnet(x[train,], y[train], alpha = 0)
+plot(cv.out)
+```
+最佳$\lambda$
+```{r}
+bestlam <- cv.out$lambda.min
+bestlam
+```
+最小test MSE
+```{r}
+ridge.pred <- predict(ridge.mod, s=bestlam, newx = x[-train,])
+mean((ridge.pred - y.test)^2)
+```
+
+iv. PCR
+
+```{r}
+library(pls)
+set.seed(10)
+x <- model.matrix(crim~., Boston)[,-1]
+y <- Boston$crim
+train <- sample(1:nrow(x), nrow(x)/2)
+test <- (-train)
+y.test <- y[-train]
+pcr.fit <- pcr(crim~., data = Boston, subset = train, scale = TRUE, validation = "CV")
+validationplot(pcr.fit, val.type = "MSEP")  
+```
+最小test MSE
+```{r}
+pcr.pred <- predict(pcr.fit, x[test,], ncomp = 7)  #M=7有最小cross-validation error
+mean((pcr.pred - y.test)^2)  #test MSE
+```
+
+#(b)
+lasso為最佳模型，因為其test MSE相對最小
+
+#(c)
+的lasso模型係數
+```{r}
+library(glmnet)
+x <- model.matrix(crim~., Boston)[,-1]
+y <- Boston$crim
+grid <- 10^seq(10, -2, length = 100)
+set.seed(10)
+train <- sample(1:nrow(x), nrow(x)/2)
+y.test <- y[-train]
+lasso.mod <- glmnet(x[train,], y[train], alpha = 1, lambda = grid)
+set.seed(1)
+cv.out <- cv.glmnet(x[train,], y[train], alpha = 1)
+bestlam <- cv.out$lambda.min
+out <- glmnet(x,y,alpha = 1, lambda = grid)
+lasso.coef <- predict(out, type = "coefficient", s=bestlam)[1:14,]
+lasso.coef
+```
+所選的lasso模型沒有用到所有變數

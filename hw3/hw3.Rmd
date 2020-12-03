@@ -1,0 +1,57 @@
+---
+title: "HW3"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+1. 安裝 R
+2. 安裝 RStudio
+
+變數類型與資料結構
+
+- 變數類型：
+    - 數值
+        - numeric
+        - integer
+        - complex
+    - 邏輯值
+    - 文字
+
+- 資料結構：
+    - 一維
+        - 向量
+        - 因素向量
+    - 二維
+        - 矩陣
+        - 資料框
+    - 多維
+        - 陣列
+        - 清單 
+```{r cars}
+summary(cars)
+```
+
+
+```{r}
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+```
+
+```{r}
+
+```
+
